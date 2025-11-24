@@ -10,6 +10,8 @@ const salesRoutes = require('./routes/salesRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
 const manufacturingRoutes = require('./routes/manufacturingRoutes');
 const procurementRoutes = require('./routes/procurementRoutes');
+const deliveryRoutes = require('./routes/deliveryRoutes');
+const invoiceRoutes = require('./routes/invoiceRoutes');
 
 const app = express();
 
@@ -27,10 +29,12 @@ app.use('/api/sales', salesRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/manufacturing', manufacturingRoutes);
 app.use('/api/procurement', procurementRoutes);
+app.use('/api/delivery', deliveryRoutes);
+app.use('/api/invoices', invoiceRoutes);
 
 // Sync DB & Start
 const PORT = process.env.PORT || 5000;
 db.sequelize.sync({ force: false, alter: true }).then(() => {
     console.log('✅ Database Synced');
-    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 });

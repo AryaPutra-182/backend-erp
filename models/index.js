@@ -78,6 +78,55 @@ SalesItem.belongsTo(SalesOrder, { foreignKey: 'salesOrderId' });
 
 Product.hasMany(SalesItem, { foreignKey: 'productId' });
 SalesItem.belongsTo(Product, { foreignKey: 'productId' });
+// ... Import model lama
+const DeliveryOrder = require('./DeliveryOrder');
+const DeliveryItem = require('./DeliveryItem');
+const Invoice = require('./Invoice');
+// ... (InvoiceItem jika dibuat terpisah)
+
+// --- RELASI DELIVERY (GUDANG) ---
+// Customer menerima pengiriman
+Customer.hasMany(DeliveryOrder, { foreignKey: 'customerId' });
+DeliveryOrder.belongsTo(Customer, { foreignKey: 'customerId' });
+
+// Sales Order memicu Delivery Order
+SalesOrder.hasOne(DeliveryOrder, { foreignKey: 'salesOrderId' });
+DeliveryOrder.belongsTo(SalesOrder, { foreignKey: 'salesOrderId' });
+
+// Delivery Item berisi Product
+DeliveryOrder.hasMany(DeliveryItem, { foreignKey: 'deliveryOrderId' });
+DeliveryItem.belongsTo(DeliveryOrder, { foreignKey: 'deliveryOrderId' });
+
+Product.hasMany(DeliveryItem, { foreignKey: 'productId' });
+DeliveryItem.belongsTo(Product, { foreignKey: 'productId' });
+
+// --- RELASI INVOICE (KEUANGAN) ---
+// Sales Order memicu Invoice
+SalesOrder.hasOne(Invoice, { foreignKey: 'salesOrderId' });
+Invoice.belongsTo(SalesOrder, { foreignKey: 'salesOrderId' });
+
+Customer.hasMany(Invoice, { foreignKey: 'customerId' });
+Invoice.belongsTo(Customer, { foreignKey: 'customerId' });
+
+// Invoice Items (Bisa reuse SalesItem atau buat tabel InvoiceItem sendiri)
+// Disini saya contohkan menggunakan relasi Invoice -> SalesItem (copy data)
+const InvoiceItem = sequelize.define('InvoiceItem', { 
+    description: DataTypes.STRING, 
+    quantity: DataTypes.INTEGER, 
+    unitPrice: DataTypes.DECIMAL(15,2), 
+    subtotal: DataTypes.DECIMAL(15,2) 
+});
+
+Invoice.hasMany(InvoiceItem, { foreignKey: 'invoiceId' });
+InvoiceItem.belongsTo(Invoice, { foreignKey: 'invoiceId' });
+Product.hasMany(InvoiceItem, { foreignKey: 'productId' });
+InvoiceItem.belongsTo(Product, { foreignKey: 'productId' });
+
+
+module.exports = {
+    // ... export lama
+    DeliveryOrder, DeliveryItem, Invoice, InvoiceItem
+};
 
 // --- EXPORT ---
 module.exports = {
@@ -86,5 +135,5 @@ module.exports = {
     Product, Material, BOM, ManufacturingOrder,
     RFQ, RFQItem, PurchaseOrder, PurchaseOrderItem,
     Quotation, QuotationItem, QuotationTemplate,
-    SalesOrder, SalesItem
+    SalesOrder, SalesItem, DeliveryOrder, DeliveryItem, Invoice, InvoiceItem
 };
