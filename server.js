@@ -12,6 +12,7 @@ const manufacturingRoutes = require('./routes/manufacturingRoutes');
 const procurementRoutes = require('./routes/procurementRoutes');
 const deliveryRoutes = require('./routes/deliveryRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
+const materialRoutes = require('./routes/materialRoutes');
 
 const app = express();
 
@@ -30,7 +31,8 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/manufacturing', manufacturingRoutes);
 app.use('/api/procurement', procurementRoutes);
 app.use('/api/delivery', deliveryRoutes);
-app.use('/api/invoices', invoiceRoutes);
+app.use('/api/invoice', invoiceRoutes);
+app.use('/api/materials', materialRoutes);
 
 // Sync DB & Start
 const PORT = process.env.PORT || 5000;
