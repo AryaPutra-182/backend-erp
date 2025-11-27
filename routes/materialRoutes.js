@@ -1,11 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const materialController = require('../controllers/materialController');
+const controller = require('../controllers/materialController');
+const multer = require('multer');
 
-router.post('/', materialController.createMaterial);
-router.get('/', materialController.getMaterials);
-router.get('/:id', materialController.getMaterialById);
-router.put('/:id', materialController.updateMaterial);
-router.delete('/:id', materialController.deleteMaterial);
+const upload = multer({ dest: 'uploads/' });
+
+router.post('/', upload.single('image'), controller.createMaterial);
+router.get('/', controller.getMaterials);
+router.get('/:id', controller.getMaterialById);
+router.put('/:id', upload.single('image'), controller.updateMaterial);
+router.delete('/:id', controller.deleteMaterial);
 
 module.exports = router;

@@ -2,12 +2,34 @@ const Material = require('../models/Material');
 
 exports.createMaterial = async (req, res) => {
   try {
-    const material = await Material.create(req.body);
-    res.status(201).json(material);
+    const {
+      name,
+      type,
+      cost,
+      category,
+      internalReference,
+      weight
+    } = req.body;
+
+    const image = req.file ? req.file.filename : null;
+
+    const material = await Material.create({
+      name,
+      type,
+      cost,
+      category,
+      internalReference,
+      weight,
+      image
+    });
+
+    res.status(201).json({ msg: 'Material created', data: material });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 exports.getMaterials = async (req, res) => {
   try {
@@ -17,6 +39,7 @@ exports.getMaterials = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 exports.getMaterialById = async (req, res) => {
   try {
@@ -28,17 +51,27 @@ exports.getMaterialById = async (req, res) => {
   }
 };
 
+
 exports.updateMaterial = async (req, res) => {
   try {
     const material = await Material.findByPk(req.params.id);
     if (!material) return res.status(404).json({ message: 'Material not found' });
 
-    await material.update(req.body);
-    res.json(material);
+    const image = req.file ? req.file.filename : material.image;
+
+    await material.update({
+      ...req.body,
+      image
+    });
+
+    res.json({ msg: 'Material updated', data: material });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
+
 
 exports.deleteMaterial = async (req, res) => {
   try {
