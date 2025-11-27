@@ -1,139 +1,118 @@
-// models/index.js
-const sequelize = require('../config/database');
-const { DataTypes } = require('sequelize');
+const sequelize = require("../config/database");
+const { DataTypes } = require("sequelize");
 
-// --- IMPORT SEMUA MODEL ---
-const User = require('./User');
-const Vendor = require('./Vendor');
-const Customer = require('./Customer');
-const Product = require('./Product');
-const Material = require('./Material');
-const BOM = require('./BOM');
-const ManufacturingOrder = require('./ManufacturingOrder');
-const RFQ = require('./RFQ');
-const RFQItem = require('./RFQItem');
-const PurchaseOrder = require('./PurchaseOrder');
-const PurchaseOrderItem = require('./PurchaseOrderItem');
-const Quotation = require('./Quotation');
-const QuotationItem = require('./QuotationItem');
-const QuotationTemplate = require('./QuotationTemplate');
-const SalesOrder = require('./SalesOrder');
-const SalesItem = require('./SalesItem');
+// --- Import Semua Model ---
+const User = require("./User");
+const Vendor = require("./Vendor");
+const Customer = require("./Customer");
+const Product = require("./Product");
+const Material = require("./Material");
+const BOM = require("./BOM");
+const ManufacturingOrder = require("./ManufacturingOrder");
+const ManufacturingOrderMaterial = require("./ManufacturingOrderMaterial");
+const RFQ = require("./RFQ");
+const RFQItem = require("./RFQItem");
+const PurchaseOrder = require("./PurchaseOrder");
+const PurchaseOrderItem = require("./PurchaseOrderItem");
+const Quotation = require("./Quotation");
+const QuotationItem = require("./QuotationItem");
+const QuotationTemplate = require("./QuotationTemplate");
+const SalesOrder = require("./SalesOrder");
+const SalesItem = require("./SalesItem");
+const DeliveryOrder = require("./DeliveryOrder");
+const DeliveryItem = require("./DeliveryItem");
+const Invoice = require("./Invoice");
+const InvoiceItem = require("./InvoiceItem");
 
-// --- DEFINISI RELASI (ASSOCIATIONS) ---
+// --- Product & Material via BOM ---
+Product.belongsToMany(Material, { through: BOM, foreignKey: "productId" });
+Material.belongsToMany(Product, { through: BOM, foreignKey: "materialId" });
 
-// 1. Inventory & Manufacturing
-// Product & Material terhubung via BOM (Many-to-Many)
-Product.belongsToMany(Material, { through: BOM, foreignKey: 'productId' });
-Material.belongsToMany(Product, { through: BOM, foreignKey: 'materialId' });
+// --- Manufacturing ---
+Product.hasMany(ManufacturingOrder, { foreignKey: "productId" });
+ManufacturingOrder.belongsTo(Product, { foreignKey: "productId" });
 
-// Manufacturing Order memproduksi Product
-Product.hasMany(ManufacturingOrder, { foreignKey: 'productId' });
-ManufacturingOrder.belongsTo(Product, { foreignKey: 'productId' });
+// Manufacturing Order → Materials (Snapshot from BOM)
+ManufacturingOrder.hasMany(ManufacturingOrderMaterial, { foreignKey: "manufacturingOrderId" });
+ManufacturingOrderMaterial.belongsTo(ManufacturingOrder, { foreignKey: "manufacturingOrderId" });
 
-// 2. Procurement (Vendor -> RFQ -> PO)
-Vendor.hasMany(RFQ, { foreignKey: 'vendorId' });
-RFQ.belongsTo(Vendor, { foreignKey: 'vendorId' });
+Material.hasMany(ManufacturingOrderMaterial, { foreignKey: "materialId" });
+ManufacturingOrderMaterial.belongsTo(Material, { foreignKey: "materialId" });
 
-RFQ.hasMany(RFQItem, { foreignKey: 'rfqId' });
-RFQItem.belongsTo(RFQ, { foreignKey: 'rfqId' });
+// --- Procurement Flow ---
+Vendor.hasMany(RFQ, { foreignKey: "vendorId" });
+RFQ.belongsTo(Vendor, { foreignKey: "vendorId" });
 
-Product.hasMany(RFQItem, { foreignKey: 'productId' });
-RFQItem.belongsTo(Product, { foreignKey: 'productId' });
+RFQ.hasMany(RFQItem, { foreignKey: "rfqId" });
+RFQItem.belongsTo(RFQ, { foreignKey: "rfqId" });
 
-// RFQ berlanjut ke PO
-RFQ.hasOne(PurchaseOrder, { foreignKey: 'rfqId' });
-PurchaseOrder.belongsTo(RFQ, { foreignKey: 'rfqId' });
+Product.hasMany(RFQItem, { foreignKey: "productId" });
+RFQItem.belongsTo(Product, { foreignKey: "productId" });
 
-PurchaseOrder.hasMany(PurchaseOrderItem, { foreignKey: 'purchaseOrderId' });
-PurchaseOrderItem.belongsTo(PurchaseOrder, { foreignKey: 'purchaseOrderId' });
+RFQ.hasOne(PurchaseOrder, { foreignKey: "rfqId" });
+PurchaseOrder.belongsTo(RFQ, { foreignKey: "rfqId" });
 
-Product.hasMany(PurchaseOrderItem, { foreignKey: 'productId' });
-PurchaseOrderItem.belongsTo(Product, { foreignKey: 'productId' });
+PurchaseOrder.hasMany(PurchaseOrderItem, { foreignKey: "purchaseOrderId" });
+PurchaseOrderItem.belongsTo(PurchaseOrder, { foreignKey: "purchaseOrderId" });
 
-// 3. Sales & CRM (Customer -> Quotation -> Sales)
-Customer.hasMany(Quotation, { foreignKey: 'customerId' });
-Quotation.belongsTo(Customer, { foreignKey: 'customerId' });
+Product.hasMany(PurchaseOrderItem, { foreignKey: "productId" });
+PurchaseOrderItem.belongsTo(Product, { foreignKey: "productId" });
 
-Quotation.hasMany(QuotationItem, { foreignKey: 'quotationId' });
-QuotationItem.belongsTo(Quotation, { foreignKey: 'quotationId' });
+// --- Sales Cycle ---
+Customer.hasMany(Quotation, { foreignKey: "customerId" });
+Quotation.belongsTo(Customer, { foreignKey: "customerId" });
 
-// Quotation Item isinya Product
-Product.hasMany(QuotationItem, { foreignKey: 'productId' });
-QuotationItem.belongsTo(Product, { foreignKey: 'productId' });
+Quotation.hasMany(QuotationItem, { foreignKey: "quotationId" });
+QuotationItem.belongsTo(Quotation, { foreignKey: "quotationId" });
 
-// Quotation Template (Untuk fitur Template Baru)
-QuotationTemplate.hasMany(Quotation, { foreignKey: 'templateId' });
-Quotation.belongsTo(QuotationTemplate, { foreignKey: 'templateId' });
+Product.hasMany(QuotationItem, { foreignKey: "productId" });
+QuotationItem.belongsTo(Product, { foreignKey: "productId" });
 
-// Quotation berlanjut ke Sales Order
-Quotation.hasOne(SalesOrder, { foreignKey: 'quotationId' });
-SalesOrder.belongsTo(Quotation, { foreignKey: 'quotationId' });
+QuotationTemplate.hasMany(Quotation, { foreignKey: "templateId" });
+Quotation.belongsTo(QuotationTemplate, { foreignKey: "templateId" });
 
-Customer.hasMany(SalesOrder, { foreignKey: 'customerId' });
-SalesOrder.belongsTo(Customer, { foreignKey: 'customerId' });
+Quotation.hasOne(SalesOrder, { foreignKey: "quotationId" });
+SalesOrder.belongsTo(Quotation, { foreignKey: "quotationId" });
 
-SalesOrder.hasMany(SalesItem, { foreignKey: 'salesOrderId' });
-SalesItem.belongsTo(SalesOrder, { foreignKey: 'salesOrderId' });
+Customer.hasMany(SalesOrder, { foreignKey: "customerId" });
+SalesOrder.belongsTo(Customer, { foreignKey: "customerId" });
 
-Product.hasMany(SalesItem, { foreignKey: 'productId' });
-SalesItem.belongsTo(Product, { foreignKey: 'productId' });
-// ... Import model lama
-const DeliveryOrder = require('./DeliveryOrder');
-const DeliveryItem = require('./DeliveryItem');
-const Invoice = require('./Invoice');
-// ... (InvoiceItem jika dibuat terpisah)
+SalesOrder.hasMany(SalesItem, { foreignKey: "salesOrderId" });
+SalesItem.belongsTo(SalesOrder, { foreignKey: "salesOrderId" });
 
-// --- RELASI DELIVERY (GUDANG) ---
-// Customer menerima pengiriman
-Customer.hasMany(DeliveryOrder, { foreignKey: 'customerId' });
-DeliveryOrder.belongsTo(Customer, { foreignKey: 'customerId' });
+Product.hasMany(SalesItem, { foreignKey: "productId" });
+SalesItem.belongsTo(Product, { foreignKey: "productId" });
 
-// Sales Order memicu Delivery Order
-SalesOrder.hasOne(DeliveryOrder, { foreignKey: 'salesOrderId' });
-DeliveryOrder.belongsTo(SalesOrder, { foreignKey: 'salesOrderId' });
+// --- Delivery (Warehouse) ---
+Customer.hasMany(DeliveryOrder, { foreignKey: "customerId" });
+DeliveryOrder.belongsTo(Customer, { foreignKey: "customerId" });
 
-// Delivery Item berisi Product
-DeliveryOrder.hasMany(DeliveryItem, { foreignKey: 'deliveryOrderId' });
-DeliveryItem.belongsTo(DeliveryOrder, { foreignKey: 'deliveryOrderId' });
+SalesOrder.hasOne(DeliveryOrder, { foreignKey: "salesOrderId" });
+DeliveryOrder.belongsTo(SalesOrder, { foreignKey: "salesOrderId" });
 
-Product.hasMany(DeliveryItem, { foreignKey: 'productId' });
-DeliveryItem.belongsTo(Product, { foreignKey: 'productId' });
+DeliveryOrder.hasMany(DeliveryItem, { foreignKey: "deliveryOrderId" });
+DeliveryItem.belongsTo(DeliveryOrder, { foreignKey: "deliveryOrderId" });
 
-// --- RELASI INVOICE (KEUANGAN) ---
-// Sales Order memicu Invoice
-SalesOrder.hasOne(Invoice, { foreignKey: 'salesOrderId' });
-Invoice.belongsTo(SalesOrder, { foreignKey: 'salesOrderId' });
+Product.hasMany(DeliveryItem, { foreignKey: "productId" });
+DeliveryItem.belongsTo(Product, { foreignKey: "productId" });
 
-Customer.hasMany(Invoice, { foreignKey: 'customerId' });
-Invoice.belongsTo(Customer, { foreignKey: 'customerId' });
+// --- Finance ---
+SalesOrder.hasOne(Invoice, { foreignKey: "salesOrderId" });
+Invoice.belongsTo(SalesOrder, { foreignKey: "salesOrderId" });
 
-// Invoice Items (Bisa reuse SalesItem atau buat tabel InvoiceItem sendiri)
-// Disini saya contohkan menggunakan relasi Invoice -> SalesItem (copy data)
-const InvoiceItem = sequelize.define('InvoiceItem', { 
-    description: DataTypes.STRING, 
-    quantity: DataTypes.INTEGER, 
-    unitPrice: DataTypes.DECIMAL(15,2), 
-    subtotal: DataTypes.DECIMAL(15,2) 
-});
+Invoice.hasMany(InvoiceItem, { foreignKey: "invoiceId" });
+InvoiceItem.belongsTo(Invoice, { foreignKey: "invoiceId" });
 
-Invoice.hasMany(InvoiceItem, { foreignKey: 'invoiceId' });
-InvoiceItem.belongsTo(Invoice, { foreignKey: 'invoiceId' });
-Product.hasMany(InvoiceItem, { foreignKey: 'productId' });
-InvoiceItem.belongsTo(Product, { foreignKey: 'productId' });
-
-
+Product.hasMany(InvoiceItem, { foreignKey: "productId" });
+InvoiceItem.belongsTo(Product, { foreignKey: "productId" });
 module.exports = {
-    // ... export lama
-    DeliveryOrder, DeliveryItem, Invoice, InvoiceItem
-};
-
-// --- EXPORT ---
-module.exports = {
-    sequelize,
-    User, Vendor, Customer, 
-    Product, Material, BOM, ManufacturingOrder,
-    RFQ, RFQItem, PurchaseOrder, PurchaseOrderItem,
-    Quotation, QuotationItem, QuotationTemplate,
-    SalesOrder, SalesItem, DeliveryOrder, DeliveryItem, Invoice, InvoiceItem
+  sequelize,
+  User, Vendor, Customer,
+  Product, Material, BOM,
+  ManufacturingOrder, ManufacturingOrderMaterial,
+  RFQ, RFQItem, PurchaseOrder, PurchaseOrderItem,
+  Quotation, QuotationItem, QuotationTemplate,
+  SalesOrder, SalesItem,
+  DeliveryOrder, DeliveryItem,
+  Invoice, InvoiceItem
 };
