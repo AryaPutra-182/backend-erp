@@ -14,6 +14,7 @@ const deliveryRoutes = require('./routes/deliveryRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const materialRoutes = require('./routes/materialRoutes');
 const manufacturingMaterialsRoutes = require('./routes/manufacturingMaterialsRoutes');
+const vendorRoutes = require('./routes/vendorRoutes');
 
 
 
@@ -38,6 +39,8 @@ app.use('/api/delivery', deliveryRoutes);
 app.use('/api/invoice', invoiceRoutes);
 app.use('/api/materials', materialRoutes);
 app.use('/api/manufacturing-materials', manufacturingMaterialsRoutes);
+app.use('/api/vendor',vendorRoutes);
+
 
 // Sync DB & Start
 const PORT = process.env.PORT || 5000;

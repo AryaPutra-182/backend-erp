@@ -41,6 +41,15 @@ Material.belongsToMany(Product, { through: BOM, foreignKey: "materialId" });
 
 // --- Manufacturing ---
 
+ManufacturingOrder.belongsTo(Product, {
+  foreignKey: "productId",
+  as: "product"
+})
+
+Product.hasMany(ManufacturingOrder, {
+  foreignKey: "productId",
+  as: "orders"
+})
 
 
 

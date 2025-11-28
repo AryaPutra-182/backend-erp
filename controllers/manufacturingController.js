@@ -74,6 +74,22 @@ const mo = await ManufacturingOrder.create(
     res.status(500).json({ error: err.message });
   }
 }
+async function getAllMO(req, res) {
+  try {
+const data = await ManufacturingOrder.findAll({
+  include: [
+    { model: Product, as: "product" },
+  ],
+  order: [['id', 'DESC']]
+})
+
+
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 
 // =============== FUNCTION MINIMAL SUPAYA TIDAK ERROR ==================
 
@@ -91,5 +107,6 @@ module.exports = {
   allocateMaterial,
   startProduction,
   consumeMaterial,
-  completeMO
+  completeMO,
+  getAllMO
 };

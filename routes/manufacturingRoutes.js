@@ -13,5 +13,7 @@ router.post("/start/:id", controller.startProduction);
 router.post("/consume/:id", controller.consumeMaterial);
 
 router.post("/complete/:id", controller.completeMO);
+router.get("/mo", controller.getAllMO);
+
 
 module.exports = router;
