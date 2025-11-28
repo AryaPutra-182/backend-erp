@@ -23,21 +23,34 @@ const DeliveryOrder = require("./DeliveryOrder");
 const DeliveryItem = require("./DeliveryItem");
 const Invoice = require("./Invoice");
 const InvoiceItem = require("./InvoiceItem");
+// models/index.js
+ManufacturingOrderMaterial.belongsTo(Product, { 
+  foreignKey: "productId",
+  as: "product" 
+});
+
+Product.hasMany(ManufacturingOrderMaterial, { 
+  foreignKey: "productId",
+  as: "materials" 
+});
+
 
 // --- Product & Material via BOM ---
 Product.belongsToMany(Material, { through: BOM, foreignKey: "productId" });
 Material.belongsToMany(Product, { through: BOM, foreignKey: "materialId" });
 
 // --- Manufacturing ---
-Product.hasMany(ManufacturingOrder, { foreignKey: "productId" });
-ManufacturingOrder.belongsTo(Product, { foreignKey: "productId" });
 
-// Manufacturing Order → Materials (Snapshot from BOM)
-ManufacturingOrder.hasMany(ManufacturingOrderMaterial, { foreignKey: "manufacturingOrderId" });
-ManufacturingOrderMaterial.belongsTo(ManufacturingOrder, { foreignKey: "manufacturingOrderId" });
+
+
 
 Material.hasMany(ManufacturingOrderMaterial, { foreignKey: "materialId" });
-ManufacturingOrderMaterial.belongsTo(Material, { foreignKey: "materialId" });
+ManufacturingOrderMaterial.belongsTo(Material, { 
+  foreignKey: "materialId",
+  as: "material"
+});
+
+
 
 // --- Procurement Flow ---
 Vendor.hasMany(RFQ, { foreignKey: "vendorId" });
@@ -115,4 +128,8 @@ module.exports = {
   SalesOrder, SalesItem,
   DeliveryOrder, DeliveryItem,
   Invoice, InvoiceItem
+
+  
 };
+
+

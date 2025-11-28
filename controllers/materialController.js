@@ -20,7 +20,7 @@ exports.createMaterial = async (req, res) => {
       category,
       internalReference,
       weight,
-      image
+      image: req.file ? req.file.filename : null
     });
 
     res.status(201).json({ msg: 'Material created', data: material });

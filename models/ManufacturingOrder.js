@@ -14,46 +14,28 @@ const ManufacturingOrder = sequelize.define(
       allowNull: false,
     },
 
+    reference: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
     quantityToProduce: {
       type: DataTypes.FLOAT,
       allowNull: false,
     },
 
-    deadline: {
+    scheduledDate: {
       type: DataTypes.DATE,
+      allowNull: true,
     },
 
-    plannedStart: {
+    endDate: {
       type: DataTypes.DATE,
-    },
-
-    actualStart: {
-      type: DataTypes.DATE,
-    },
-
-    actualFinish: {
-      type: DataTypes.DATE,
-    },
-
-    producedQty: {
-      type: DataTypes.FLOAT,
-      defaultValue: 0,
-    },
-
-    scrapQty: {
-      type: DataTypes.FLOAT,
-      defaultValue: 0,
+      allowNull: true,
     },
 
     status: {
-      type: DataTypes.ENUM(
-        "Draft",
-        "Confirmed",
-        "Waiting Material",
-        "In Progress",
-        "Done",
-        "Cancelled"
-      ),
+      type: DataTypes.STRING,
       defaultValue: "Draft",
     },
   },

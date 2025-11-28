@@ -13,6 +13,9 @@ const procurementRoutes = require('./routes/procurementRoutes');
 const deliveryRoutes = require('./routes/deliveryRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const materialRoutes = require('./routes/materialRoutes');
+const manufacturingMaterialsRoutes = require('./routes/manufacturingMaterialsRoutes');
+
+
 
 const app = express();
 
@@ -22,6 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Static folder untuk akses gambar
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use(express.static(path.join(__dirname, 'uploads')));
 
 // Gunakan Routes
 app.use('/api/customers', customerRoutes);
@@ -33,6 +37,7 @@ app.use('/api/procurement', procurementRoutes);
 app.use('/api/delivery', deliveryRoutes);
 app.use('/api/invoice', invoiceRoutes);
 app.use('/api/materials', materialRoutes);
+app.use('/api/manufacturing-materials', manufacturingMaterialsRoutes);
 
 // Sync DB & Start
 const PORT = process.env.PORT || 5000;

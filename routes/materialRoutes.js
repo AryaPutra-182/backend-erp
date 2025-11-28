@@ -2,8 +2,20 @@ const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/materialController');
 const multer = require('multer');
+const path = require('path');
 
-const upload = multer({ dest: 'uploads/' });
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/'); // folder penyimpanan
+  },
+  filename: (req, file, cb) => {
+    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname); 
+    cb(null, unique + ext); 
+  }
+});
+
+const upload = multer({ storage });
 
 router.post('/', upload.single('image'), controller.createMaterial);
 router.get('/', controller.getMaterials);

@@ -1,11 +1,17 @@
-const router = require("express").Router();
+const express = require("express");
+const router = express.Router();
 const controller = require("../controllers/manufacturingController");
 
-router.post("/", controller.createMO);
-router.get("/:id/check", controller.checkAvailability);
-router.post("/:id/allocate", controller.allocateMaterial);
-router.post("/:id/start", controller.startProduction);
-router.post("/:id/consume", controller.consumeMaterial);
-router.post("/:id/complete", controller.completeMO);
+router.post("/mo", controller.createMO);
+
+router.post("/allocate/:id", controller.allocateMaterial);
+
+router.get("/availability/:id", controller.checkAvailability);
+
+router.post("/start/:id", controller.startProduction);
+
+router.post("/consume/:id", controller.consumeMaterial);
+
+router.post("/complete/:id", controller.completeMO);
 
 module.exports = router;
