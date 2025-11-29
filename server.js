@@ -15,6 +15,7 @@ const invoiceRoutes = require('./routes/invoiceRoutes');
 const materialRoutes = require('./routes/materialRoutes');
 const manufacturingMaterialsRoutes = require('./routes/manufacturingMaterialsRoutes');
 const vendorRoutes = require('./routes/vendorRoutes');
+const purchaseRoutes = require("./routes/purchaseRoutes")
 
 
 
@@ -40,6 +41,7 @@ app.use('/api/invoice', invoiceRoutes);
 app.use('/api/materials', materialRoutes);
 app.use('/api/manufacturing-materials', manufacturingMaterialsRoutes);
 app.use('/api/vendor',vendorRoutes);
+app.use("/api/purchase", purchaseRoutes);
 
 
 // Sync DB & Start

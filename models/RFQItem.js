@@ -1,10 +1,13 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/database");
 
-const RFQItem = sequelize.define('RFQItem', {
-    quantity: { type: DataTypes.INTEGER },
-    expectedDelivery: { type: DataTypes.DATE },
-    estimatedSubtotal: { type: DataTypes.DECIMAL(15, 2) }
-});
-
-module.exports = RFQItem;
+const RFQItem = sequelize.define("RFQItem", {
+  rfqId: DataTypes.INTEGER,
+  productId: DataTypes.INTEGER,
+  qty: DataTypes.FLOAT,
+  price: DataTypes.FLOAT,
+  amount: DataTypes.FLOAT
+},{
+  tableName: "rfqitems"
+})
+module.exports = RFQItem

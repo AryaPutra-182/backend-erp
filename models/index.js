@@ -23,7 +23,11 @@ const DeliveryOrder = require("./DeliveryOrder");
 const DeliveryItem = require("./DeliveryItem");
 const Invoice = require("./Invoice");
 const InvoiceItem = require("./InvoiceItem");
-// models/index.js
+
+// ======================================================================
+// RELASI MANUFACTURING
+// ======================================================================
+
 ManufacturingOrderMaterial.belongsTo(Product, { 
   foreignKey: "productId",
   as: "product" 
@@ -33,13 +37,6 @@ Product.hasMany(ManufacturingOrderMaterial, {
   foreignKey: "productId",
   as: "materials" 
 });
-
-
-// --- Product & Material via BOM ---
-Product.belongsToMany(Material, { through: BOM, foreignKey: "productId" });
-Material.belongsToMany(Product, { through: BOM, foreignKey: "materialId" });
-
-// --- Manufacturing ---
 
 ManufacturingOrder.belongsTo(Product, {
   foreignKey: "productId",
@@ -51,7 +48,8 @@ Product.hasMany(ManufacturingOrder, {
   as: "orders"
 })
 
-
+Product.belongsToMany(Material, { through: BOM, foreignKey: "productId" });
+Material.belongsToMany(Product, { through: BOM, foreignKey: "materialId" });
 
 Material.hasMany(ManufacturingOrderMaterial, { foreignKey: "materialId" });
 ManufacturingOrderMaterial.belongsTo(Material, { 
@@ -59,9 +57,10 @@ ManufacturingOrderMaterial.belongsTo(Material, {
   as: "material"
 });
 
+// ======================================================================
+// RELASI RFQ — FIXED — hanya ada sekali
+// ======================================================================
 
-
-// --- Procurement Flow ---
 Vendor.hasMany(RFQ, { foreignKey: "vendorId" });
 RFQ.belongsTo(Vendor, { foreignKey: "vendorId" });
 
@@ -70,6 +69,10 @@ RFQItem.belongsTo(RFQ, { foreignKey: "rfqId" });
 
 Product.hasMany(RFQItem, { foreignKey: "productId" });
 RFQItem.belongsTo(Product, { foreignKey: "productId" });
+
+// ======================================================================
+// RELASI PURCHASE ORDER
+// ======================================================================
 
 RFQ.hasOne(PurchaseOrder, { foreignKey: "rfqId" });
 PurchaseOrder.belongsTo(RFQ, { foreignKey: "rfqId" });
@@ -80,7 +83,10 @@ PurchaseOrderItem.belongsTo(PurchaseOrder, { foreignKey: "purchaseOrderId" });
 Product.hasMany(PurchaseOrderItem, { foreignKey: "productId" });
 PurchaseOrderItem.belongsTo(Product, { foreignKey: "productId" });
 
-// --- Sales Cycle ---
+// ======================================================================
+// RELASI SALES
+// ======================================================================
+
 Customer.hasMany(Quotation, { foreignKey: "customerId" });
 Quotation.belongsTo(Customer, { foreignKey: "customerId" });
 
@@ -105,7 +111,10 @@ SalesItem.belongsTo(SalesOrder, { foreignKey: "salesOrderId" });
 Product.hasMany(SalesItem, { foreignKey: "productId" });
 SalesItem.belongsTo(Product, { foreignKey: "productId" });
 
-// --- Delivery (Warehouse) ---
+// ======================================================================
+// RELASI DELIVERY
+// ======================================================================
+
 Customer.hasMany(DeliveryOrder, { foreignKey: "customerId" });
 DeliveryOrder.belongsTo(Customer, { foreignKey: "customerId" });
 
@@ -118,7 +127,10 @@ DeliveryItem.belongsTo(DeliveryOrder, { foreignKey: "deliveryOrderId" });
 Product.hasMany(DeliveryItem, { foreignKey: "productId" });
 DeliveryItem.belongsTo(Product, { foreignKey: "productId" });
 
-// --- Finance ---
+// ======================================================================
+// RELASI FINANCE
+// ======================================================================
+
 SalesOrder.hasOne(Invoice, { foreignKey: "salesOrderId" });
 Invoice.belongsTo(SalesOrder, { foreignKey: "salesOrderId" });
 
@@ -127,6 +139,11 @@ InvoiceItem.belongsTo(Invoice, { foreignKey: "invoiceId" });
 
 Product.hasMany(InvoiceItem, { foreignKey: "productId" });
 InvoiceItem.belongsTo(Product, { foreignKey: "productId" });
+
+// ======================================================================
+// EXPORT MODEL
+// ======================================================================
+
 module.exports = {
   sequelize,
   User, Vendor, Customer,
@@ -136,9 +153,5 @@ module.exports = {
   Quotation, QuotationItem, QuotationTemplate,
   SalesOrder, SalesItem,
   DeliveryOrder, DeliveryItem,
-  Invoice, InvoiceItem
-
-  
+  Invoice, InvoiceItem,
 };
-
-
