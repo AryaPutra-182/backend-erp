@@ -22,6 +22,7 @@ const positionRoutes = require("./routes/positionRoutes");
 
 
 
+
 const app = express();
 
 app.use(cors());
@@ -52,7 +53,28 @@ app.use("/api/positions", positionRoutes);
 
 // Sync DB & Start
 const PORT = process.env.PORT || 5000;
-db.sequelize.sync({ force: false, alter: true }).then(() => {
+const QuotationTemplate = require("./models/QuotationTemplate");
+
+db.sequelize.sync({ force: false, alter: true }).then(async () => {
     console.log('✅ Database Synced');
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+    // --- AUTO SEED DEFAULT TEMPLATE ---
+ // --- AUTO SEED DEFAULT TEMPLATE ---
+try {
+  const count = await QuotationTemplate.count();
+  if (count === 0) {
+    await QuotationTemplate.create({
+      templateName: "Default Template",
+      expiresAfterDays: 30,
+      defaultCompanyName: "Your Company Name",
+      notes: "Default quotation terms and conditions apply."
+    });
+
+    console.log("📌 Default quotation template created automatically.");
+  }
+} catch (err) {
+  console.log("⚠️ Failed to auto-create template:", err.message);
+}
+
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 });

@@ -1,13 +1,56 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/database");
 
-const SalesOrder = sequelize.define('SalesOrder', {
-    soNumber: { type: DataTypes.STRING, unique: true }, // INV/2024/001
-    transactionDate: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
-    
-    grandTotal: { type: DataTypes.DECIMAL(15, 2) },
-    paymentStatus: { type: DataTypes.ENUM('Unpaid', 'Partial', 'Paid'), defaultValue: 'Unpaid' },
-    status: { type: DataTypes.ENUM('Draft', 'Sent', 'Done', 'Cancelled'), defaultValue: 'Draft' }
+const SalesOrder = sequelize.define("SalesOrder", {
+  soNumber: { 
+    type: DataTypes.STRING, 
+    unique: true 
+  },
+
+  quotationId: { 
+    type: DataTypes.INTEGER,
+    allowNull: true 
+  }, // <--- Penting agar bisa link dari quotation
+  
+  transactionDate: { 
+    type: DataTypes.DATE, 
+    defaultValue: DataTypes.NOW 
+  },
+
+  subtotal: { 
+    type: DataTypes.DECIMAL(15, 2), 
+    defaultValue: 0 
+  },
+
+  tax: { 
+    type: DataTypes.DECIMAL(15, 2), 
+    defaultValue: 0 
+  },
+
+  discount: { 
+    type: DataTypes.DECIMAL(15, 2),
+    defaultValue: 0
+  },
+
+  grandTotal: { 
+    type: DataTypes.DECIMAL(15, 2), 
+    defaultValue: 0 
+  },
+
+  paymentStatus: {
+    type: DataTypes.ENUM("Unpaid", "Partial", "Paid"),
+    defaultValue: "Unpaid"
+  },
+
+  deliveryStatus: {
+    type: DataTypes.ENUM("Waiting", "Partial", "Delivered"),
+    defaultValue: "Waiting"
+  },
+
+  status: {
+    type: DataTypes.ENUM("Draft", "Confirmed", "Sent", "Closed", "Cancelled"),
+    defaultValue: "Draft"
+  }
 });
 
 module.exports = SalesOrder;

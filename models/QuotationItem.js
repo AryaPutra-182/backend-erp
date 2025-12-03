@@ -1,17 +1,12 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const QuotationItem = sequelize.define('QuotationItem', {
-    description: { type: DataTypes.STRING },
-    quantity: { type: DataTypes.INTEGER, defaultValue: 1 },
-    unitPrice: { type: DataTypes.DECIMAL(15, 2) },
-    subtotal: { type: DataTypes.DECIMAL(15, 2) },
-    
-    // Fitur Baru: Membedakan "Order Lines" (Main) vs "Optional Products"
-    itemType: { 
-        type: DataTypes.ENUM('Main', 'Optional'), 
-        defaultValue: 'Main' 
-    }
+const QuotationItem = sequelize.define("QuotationItem", {
+  productId: { type: DataTypes.INTEGER, allowNull: false },
+  description: DataTypes.STRING,
+  quantity: DataTypes.INTEGER,
+  unitPrice: DataTypes.DECIMAL(15,2),
+  subtotal: DataTypes.DECIMAL(15,2)
 });
 
 module.exports = QuotationItem;

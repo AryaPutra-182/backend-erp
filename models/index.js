@@ -1,7 +1,7 @@
 const sequelize = require("../config/database");
 const { DataTypes } = require("sequelize");
 
-// --- Import Semua Model ---
+// --- Import Models ---
 const User = require("./User");
 const Vendor = require("./Vendor");
 const Customer = require("./Customer");
@@ -28,72 +28,74 @@ const Position = require("./Position");
 const Employee = require("./Employee");
 
 // ======================================================================
-// RELASI MANUFACTURING
+// MANUFACTURING
 // ======================================================================
 
-ManufacturingOrderMaterial.belongsTo(Product, { 
+ManufacturingOrderMaterial.belongsTo(Product, {
   foreignKey: "productId",
-  as: "product" 
+  as: "product"
 });
 
-Product.hasMany(ManufacturingOrderMaterial, { 
+Product.hasMany(ManufacturingOrderMaterial, {
   foreignKey: "productId",
-  as: "materials" 
+  as: "materials",
+  onDelete: "CASCADE"
 });
 
 ManufacturingOrder.belongsTo(Product, {
   foreignKey: "productId",
   as: "product"
-})
+});
 
 Product.hasMany(ManufacturingOrder, {
   foreignKey: "productId",
   as: "orders"
-})
+});
 
 Product.belongsToMany(Material, { through: BOM, foreignKey: "productId" });
 Material.belongsToMany(Product, { through: BOM, foreignKey: "materialId" });
 
 Material.hasMany(ManufacturingOrderMaterial, { foreignKey: "materialId" });
-ManufacturingOrderMaterial.belongsTo(Material, { 
+ManufacturingOrderMaterial.belongsTo(Material, {
   foreignKey: "materialId",
   as: "material"
 });
 
+
 // ======================================================================
-// RELASI RFQ — FIXED — hanya ada sekali
+// PROCUREMENT (RFQ -> PO)
 // ======================================================================
 
 Vendor.hasMany(RFQ, { foreignKey: "vendorId" });
 RFQ.belongsTo(Vendor, { foreignKey: "vendorId" });
 
-RFQ.hasMany(RFQItem, { foreignKey: "rfqId" });
+RFQ.hasMany(RFQItem, { foreignKey: "rfqId", onDelete: "CASCADE" });
 RFQItem.belongsTo(RFQ, { foreignKey: "rfqId" });
 
 Product.hasMany(RFQItem, { foreignKey: "productId" });
 RFQItem.belongsTo(Product, { foreignKey: "productId" });
 
-// ======================================================================
-// RELASI PURCHASE ORDER
-// ======================================================================
-
 RFQ.hasOne(PurchaseOrder, { foreignKey: "rfqId" });
 PurchaseOrder.belongsTo(RFQ, { foreignKey: "rfqId" });
 
-PurchaseOrder.hasMany(PurchaseOrderItem, { foreignKey: "purchaseOrderId" });
+PurchaseOrder.hasMany(PurchaseOrderItem, {
+  foreignKey: "purchaseOrderId",
+  onDelete: "CASCADE"
+});
 PurchaseOrderItem.belongsTo(PurchaseOrder, { foreignKey: "purchaseOrderId" });
 
 Product.hasMany(PurchaseOrderItem, { foreignKey: "productId" });
 PurchaseOrderItem.belongsTo(Product, { foreignKey: "productId" });
 
+
 // ======================================================================
-// RELASI SALES
+// SALES (Quotation -> Sales Order)
 // ======================================================================
 
 Customer.hasMany(Quotation, { foreignKey: "customerId" });
 Quotation.belongsTo(Customer, { foreignKey: "customerId" });
 
-Quotation.hasMany(QuotationItem, { foreignKey: "quotationId" });
+Quotation.hasMany(QuotationItem, { foreignKey: "quotationId", onDelete: "CASCADE" });
 QuotationItem.belongsTo(Quotation, { foreignKey: "quotationId" });
 
 Product.hasMany(QuotationItem, { foreignKey: "productId" });
@@ -108,14 +110,19 @@ SalesOrder.belongsTo(Quotation, { foreignKey: "quotationId" });
 Customer.hasMany(SalesOrder, { foreignKey: "customerId" });
 SalesOrder.belongsTo(Customer, { foreignKey: "customerId" });
 
-SalesOrder.hasMany(SalesItem, { foreignKey: "salesOrderId" });
+SalesOrder.hasMany(SalesItem, { 
+  foreignKey: "salesOrderId", 
+  as: "items",
+  onDelete: "CASCADE"
+});
 SalesItem.belongsTo(SalesOrder, { foreignKey: "salesOrderId" });
 
 Product.hasMany(SalesItem, { foreignKey: "productId" });
 SalesItem.belongsTo(Product, { foreignKey: "productId" });
 
+
 // ======================================================================
-// RELASI DELIVERY
+// DELIVERY WORKFLOW
 // ======================================================================
 
 Customer.hasMany(DeliveryOrder, { foreignKey: "customerId" });
@@ -124,41 +131,54 @@ DeliveryOrder.belongsTo(Customer, { foreignKey: "customerId" });
 SalesOrder.hasOne(DeliveryOrder, { foreignKey: "salesOrderId" });
 DeliveryOrder.belongsTo(SalesOrder, { foreignKey: "salesOrderId" });
 
-DeliveryOrder.hasMany(DeliveryItem, { foreignKey: "deliveryOrderId" });
+DeliveryOrder.hasMany(DeliveryItem, {
+  foreignKey: "deliveryOrderId",
+  as: "items",
+  onDelete: "CASCADE"
+});
 DeliveryItem.belongsTo(DeliveryOrder, { foreignKey: "deliveryOrderId" });
 
 Product.hasMany(DeliveryItem, { foreignKey: "productId" });
 DeliveryItem.belongsTo(Product, { foreignKey: "productId" });
 
+
 // ======================================================================
-// RELASI FINANCE
+// FINANCE (Invoice)
 // ======================================================================
 
 SalesOrder.hasOne(Invoice, { foreignKey: "salesOrderId" });
 Invoice.belongsTo(SalesOrder, { foreignKey: "salesOrderId" });
 
-Invoice.hasMany(InvoiceItem, { foreignKey: "invoiceId" });
+Invoice.hasMany(InvoiceItem, {
+  foreignKey: "invoiceId",
+  as: "items",
+  onDelete: "CASCADE"
+});
 InvoiceItem.belongsTo(Invoice, { foreignKey: "invoiceId" });
 
 Product.hasMany(InvoiceItem, { foreignKey: "productId" });
 InvoiceItem.belongsTo(Product, { foreignKey: "productId" });
 
-// Relasi Department -> Employee
-Department.hasMany(Employee, { foreignKey: "departmentId" });
-Employee.belongsTo(Department, { foreignKey: "departmentId" });
-
-// Relasi Position -> Employee
-Position.hasMany(Employee, { foreignKey: "positionId" });
-Employee.belongsTo(Position, { foreignKey: "positionId" });
-
-// Department Manager assign
-Department.belongsTo(Employee, { as: "manager", foreignKey: "managerId" });
-
-// Parent Department optional
-Department.belongsTo(Department, { as: "parent", foreignKey: "parentId" });
 
 // ======================================================================
-// EXPORT MODEL
+// HR (Employee, Department, Position)
+// ======================================================================
+
+Department.hasMany(Employee, { foreignKey: "departmentId", onDelete: "SET NULL" });
+Employee.belongsTo(Department, { foreignKey: "departmentId" });
+
+Position.hasMany(Employee, { foreignKey: "positionId", onDelete: "SET NULL" });
+Employee.belongsTo(Position, { foreignKey: "positionId" });
+
+// Department Manager
+Department.belongsTo(Employee, { as: "manager", foreignKey: "managerId" });
+
+// Parent Department (recursive relationship)
+Department.belongsTo(Department, { as: "parent", foreignKey: "parentId" });
+
+
+// ======================================================================
+// EXPORT
 // ======================================================================
 
 module.exports = {
@@ -168,9 +188,6 @@ module.exports = {
   ManufacturingOrder, ManufacturingOrderMaterial,
   RFQ, RFQItem, PurchaseOrder, PurchaseOrderItem,
   Quotation, QuotationItem, QuotationTemplate,
-  SalesOrder, SalesItem,
-  DeliveryOrder, DeliveryItem,
-  Invoice, InvoiceItem, Employee,
-  Department,
-  Position
+  SalesOrder, SalesItem, DeliveryOrder, DeliveryItem,
+  Invoice, InvoiceItem, Employee, Department, Position
 };
