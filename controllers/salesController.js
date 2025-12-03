@@ -1,9 +1,9 @@
 const { 
-  SalesOrder, SalesItem, Product, Quotation, QuotationItem, sequelize 
+  SalesOrder, SalesItem, Product, Quotation, QuotationItem, Customer, sequelize 
 } = require('../models');
 
 
-// ======================== 1) CREATE SALES ORDER MANUAL ========================
+// ======================== CREATE SALES ORDER MANUAL ========================
 async function createSalesOrder(req, res) {
   const t = await sequelize.transaction();
   try {
@@ -13,11 +13,15 @@ async function createSalesOrder(req, res) {
       return res.status(400).json({ error: "Missing customer or items" });
     }
 
-    let grandTotal = items.reduce((sum, i) => sum + (i.quantity * i.unitPrice), 0);
+    const subtotal = items.reduce((sum, i) => sum + (i.quantity * i.unitPrice), 0);
+    const tax = subtotal * 0.11;
+    const grandTotal = subtotal + tax;
 
     const order = await SalesOrder.create({
       soNumber: `SO/${Date.now()}`,
       customerId,
+      subtotal,
+      tax,
       grandTotal,
       status: "Draft",
       paymentStatus: "Unpaid"
@@ -44,7 +48,8 @@ async function createSalesOrder(req, res) {
 }
 
 
-// ======================== 2) CREATE FROM QUOTATION ========================
+
+// ======================== CONVERT FROM QUOTATION ========================
 async function createFromQuotation(req, res) {
   const { id } = req.params;
 
@@ -57,11 +62,8 @@ async function createFromQuotation(req, res) {
       include: [{ model: QuotationItem, include: [Product] }]
     });
 
-    if (!quotation) {
-      return res.status(404).json({ msg: "Quotation not found" });
-    }
+    if (!quotation) return res.status(404).json({ msg: "Quotation not found" });
 
-    // 🔹 Hitung ulang subtotal dari item
     const subtotal = quotation.QuotationItems.reduce(
       (sum, item) => sum + Number(item.subtotal ?? (item.quantity * item.unitPrice)),
       0
@@ -70,10 +72,10 @@ async function createFromQuotation(req, res) {
     const tax = subtotal * 0.11;
     const grandTotal = subtotal + tax;
 
-    // 🔹 Buat Sales Order
     const salesOrder = await SalesOrder.create({
-      soNumber: `SO/${new Date().getFullYear()}/${Date.now()}`,
+      soNumber: `SO/${Date.now()}`,
       customerId: quotation.customerId,
+      quotationId: quotation.id,
       subtotal,
       tax,
       grandTotal,
@@ -81,18 +83,16 @@ async function createFromQuotation(req, res) {
       paymentStatus: "Unpaid"
     }, { transaction: t });
 
-    // 🔹 Copy item ke SalesItem
     const salesItems = quotation.QuotationItems.map(item => ({
       salesOrderId: salesOrder.id,
       productId: item.productId,
       quantity: item.quantity,
       unitPrice: item.unitPrice,
-      subtotal: Number(item.subtotal ?? (item.quantity * item.unitPrice))
+      subtotal: item.subtotal
     }));
 
     await SalesItem.bulkCreate(salesItems, { transaction: t });
 
-    // 🔹 Update status quotation
     quotation.status = "Converted";
     await quotation.save({ transaction: t });
 
@@ -109,39 +109,57 @@ async function createFromQuotation(req, res) {
 
 
 
-// ======================== 3) CONFIRM SALES ORDER ========================
+// ======================== CONFIRM SALES ORDER ========================
 async function confirmSales(req, res) {
   const t = await sequelize.transaction();
+
   try {
-    const so = await SalesOrder.findByPk(req.params.id, {
-      include: [SalesItem]
+    const order = await SalesOrder.findByPk(req.params.id, {
+      include: [
+        {
+          model: SalesItem,
+          as: "items", // harus sesuai alias model index.js
+          include: [Product]
+        }
+      ]
     });
 
-    if (!so) return res.status(404).json({ error: "Sales Order not found" });
+    if (!order) return res.status(404).json({ error: "Sales Order not found" });
 
-    for (const item of so.SalesItems) {
+    // Kurangi stok produk
+    for (const item of order.items) {
       const product = await Product.findByPk(item.productId);
+
       if (product) {
-        await product.decrement("stock", { by: item.quantity, transaction: t });
+        await product.update(
+          { stock: product.stock - item.quantity },
+          { transaction: t }
+        );
       }
     }
 
-    so.status = "Confirmed";
-    await so.save({ transaction: t });
+    // Update status order
+    order.status = "Confirmed";
+    await order.save({ transaction: t });
 
     await t.commit();
-    res.json({ msg: "Sales Order Confirmed & Stock Updated" });
+    res.json({ msg: "✔ Order confirmed & stock updated", order });
 
   } catch (err) {
     await t.rollback();
+    console.error("❌ Confirm error:", err);
     res.status(500).json({ error: err.message });
   }
 }
 
+
+
+
+// ======================== GET ALL SALES ========================
 const getAllSalesOrders = async (req, res) => {
   try {
     const data = await SalesOrder.findAll({
-      include: [{ model: require("../models/Customer") }],
+      include: [{ model: Customer }],
       order: [['createdAt', 'DESC']]
     });
 
@@ -154,10 +172,37 @@ const getAllSalesOrders = async (req, res) => {
 
 
 
-// ======================== EXPORTS ========================
+// ======================== GET SALES ORDER BY ID ========================
+const getSalesOrderById = async (req, res) => {
+  try {
+    const order = await SalesOrder.findByPk(req.params.id, {
+      include: [
+        {
+          model: SalesItem,
+          as: "items",
+          include: [{ model: Product }]
+        },
+        Customer
+      ]
+    });
+
+    if (!order) return res.status(404).json({ msg: "Sales Order not found" });
+
+    res.json(order);
+
+  } catch (err) {
+    console.error("❌ error getSalesOrderById:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+
+// ======================== EXPORT ========================
 module.exports = {
   createSalesOrder,
   createFromQuotation,
   confirmSales,
-  getAllSalesOrders
+  getAllSalesOrders,
+  getSalesOrderById
 };

@@ -1,29 +1,27 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
 
-const InvoiceItem = sequelize.define(
-  "InvoiceItem",
-  {
-    description: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    quantity: {
-      type: DataTypes.INTEGER,
-      defaultValue: 1,
-    },
-    unitPrice: {
-      type: DataTypes.DECIMAL(15, 2),
-      allowNull: false,
-    },
-    subtotal: {
-      type: DataTypes.DECIMAL(15, 2),
-      allowNull: false,
-    },
+const InvoiceItem = sequelize.define("InvoiceItem", {
+  invoiceId: {
+    type: DataTypes.INTEGER,
+    allowNull: false
   },
-  {
-    tableName: "invoice_items",
+  productId: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  quantity: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  unitPrice: {
+    type: DataTypes.DECIMAL(15, 2),
+    defaultValue: 0
+  },
+  subtotal: {
+    type: DataTypes.DECIMAL(15, 2),
+    defaultValue: 0
   }
-);
+});
 
 module.exports = InvoiceItem;

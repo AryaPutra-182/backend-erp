@@ -1,9 +1,12 @@
-const express = require('express');
-const router = express.Router();
-const controller = require('../controllers/invoiceController');
+const router = require("express").Router();
+const invoiceController = require("../controllers/invoiceController");
 
-router.post('/', controller.createInvoiceFromSO);
-router.get('/:id', controller.getInvoiceDetail);
-router.post('/:id/pay', controller.registerPayment);
+// HARUS SAMA DENGAN FRONTEND ↓↓↓
+router.post("/from-delivery/:id", invoiceController.createFromDelivery);
+
+router.put("/:id/validate", invoiceController.validateInvoice);
+router.get("/", invoiceController.getAllInvoices);
+router.get("/:id", invoiceController.getInvoiceById);
+router.put('/:id/pay', invoiceController.updatePaymentStatus);
 
 module.exports = router;

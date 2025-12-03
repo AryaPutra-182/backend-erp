@@ -21,12 +21,12 @@ const SalesOrder = require("./SalesOrder");
 const SalesItem = require("./SalesItem");
 const DeliveryOrder = require("./DeliveryOrder");
 const DeliveryItem = require("./DeliveryItem");
-const Invoice = require("./Invoice");
-const InvoiceItem = require("./InvoiceItem");
+
 const Department = require("./Department");
 const Position = require("./Position");
 const Employee = require("./Employee");
-
+const Invoice = require("./Invoice");
+const InvoiceItem = require("./InvoiceItem");
 // ======================================================================
 // MANUFACTURING
 // ======================================================================
@@ -128,8 +128,14 @@ SalesItem.belongsTo(Product, { foreignKey: "productId" });
 Customer.hasMany(DeliveryOrder, { foreignKey: "customerId" });
 DeliveryOrder.belongsTo(Customer, { foreignKey: "customerId" });
 
-SalesOrder.hasOne(DeliveryOrder, { foreignKey: "salesOrderId" });
-DeliveryOrder.belongsTo(SalesOrder, { foreignKey: "salesOrderId" });
+// Relasi SalesOrder ke DeliveryOrder
+SalesOrder.hasOne(DeliveryOrder, { foreignKey: "salesOrderId", as: "deliveryOrder" });
+
+// 👇 PERBAIKI BAGIAN INI (Tambahkan as: "salesOrder")
+DeliveryOrder.belongsTo(SalesOrder, { 
+  foreignKey: "salesOrderId",
+  as: "salesOrder" // <--- WAJIB ADA (Huruf kecil 's') AGAR MATCH DENGAN CONTROLLER
+});
 
 DeliveryOrder.hasMany(DeliveryItem, {
   foreignKey: "deliveryOrderId",
@@ -146,18 +152,44 @@ DeliveryItem.belongsTo(Product, { foreignKey: "productId" });
 // FINANCE (Invoice)
 // ======================================================================
 
-SalesOrder.hasOne(Invoice, { foreignKey: "salesOrderId" });
-Invoice.belongsTo(SalesOrder, { foreignKey: "salesOrderId" });
+// ======================================================================
+// FINANCE (Invoice)
+// ======================================================================
 
+// ======================================================================
+// FINANCE (Invoice)
+// ======================================================================
+
+// 1. Link Customer → Invoice (INI YANG TADI KURANG & BIKIN ERROR)
+Customer.hasMany(Invoice, { foreignKey: "customerId" });
+Invoice.belongsTo(Customer, { foreignKey: "customerId" });
+
+// 2. Link Sales Order → Invoice
+SalesOrder.hasOne(Invoice, { foreignKey: "salesOrderId", as: "invoice" });
+Invoice.belongsTo(SalesOrder, { 
+  foreignKey: "salesOrderId", 
+  as: "salesOrder" 
+});
+
+// 3. Link Delivery Order → Invoice
+DeliveryOrder.hasOne(Invoice, { foreignKey: "deliveryOrderId", as: "invoice" });
+Invoice.belongsTo(DeliveryOrder, { 
+  foreignKey: "deliveryOrderId", 
+  as: "deliveryOrder" 
+});
+
+// 4. Invoice Items
 Invoice.hasMany(InvoiceItem, {
   foreignKey: "invoiceId",
   as: "items",
-  onDelete: "CASCADE"
+  onDelete: "CASCADE",
 });
 InvoiceItem.belongsTo(Invoice, { foreignKey: "invoiceId" });
 
+// 5. Product → InvoiceItem
 Product.hasMany(InvoiceItem, { foreignKey: "productId" });
 InvoiceItem.belongsTo(Product, { foreignKey: "productId" });
+
 
 
 // ======================================================================

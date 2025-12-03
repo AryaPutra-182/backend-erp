@@ -6,7 +6,6 @@ const ManufacturingOrder = sequelize.define(
   {
     moNumber: {
       type: DataTypes.STRING,
-      unique: true,
     },
 
     productId: {

@@ -1,9 +1,17 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/database");
 
-const DeliveryItem = sequelize.define('DeliveryItem', {
-    quantityDemand: { type: DataTypes.INTEGER }, // Jumlah yang diminta
-    quantityDone: { type: DataTypes.INTEGER, defaultValue: 0 } // Jumlah yang sudah diproses
+const DeliveryItem = sequelize.define("DeliveryItem", {
+  quantityDemand: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  },
+  quantityDone: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+  }
 });
 
 module.exports = DeliveryItem;

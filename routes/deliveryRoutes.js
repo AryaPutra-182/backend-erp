@@ -1,11 +1,13 @@
-const express = require('express');
-const router = express.Router();
-const controller = require('../controllers/deliveryController');
+const router = require("express").Router();
+const ctrl = require("../controllers/deliveryController");
 
-router.get('/:id', controller.getDeliveryDetail);
+router.post("/create-from-sales/:soId", ctrl.createFromSalesOrder);
+router.get("/", ctrl.getAllDeliveryOrders);
+router.get("/:id", ctrl.getDeliveryOrderById);
+router.put("/:id/status", ctrl.updateStatus);
+router.put("/item/:itemId", ctrl.updateItemQty);
+router.post("/:id/validate", ctrl.validateDelivery);
 
-// Action Buttons
-router.post('/:id/check', controller.checkAvailability);
-router.post('/:id/validate', controller.validateDelivery);
+
 
 module.exports = router;

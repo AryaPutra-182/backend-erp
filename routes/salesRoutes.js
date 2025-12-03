@@ -6,6 +6,8 @@ router.get("/", controller.getAllSalesOrders);
 
 router.post("/", controller.createSalesOrder);
 router.post("/from-quotation/:id", controller.createFromQuotation);
-router.post("/confirm/:id", controller.confirmSales);
+router.post("/:id/confirm", controller.confirmSales);
+router.get("/:id", controller.getSalesOrderById);
+
 
 module.exports = router;
