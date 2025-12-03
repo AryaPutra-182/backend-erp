@@ -16,6 +16,9 @@ const materialRoutes = require('./routes/materialRoutes');
 const manufacturingMaterialsRoutes = require('./routes/manufacturingMaterialsRoutes');
 const vendorRoutes = require('./routes/vendorRoutes');
 const purchaseRoutes = require("./routes/purchaseRoutes")
+const departmentRoutes = require("./routes/departmentRoutes");
+const employeeRoutes = require("./routes/employeeRoutes");
+const positionRoutes = require("./routes/positionRoutes");
 
 
 
@@ -42,6 +45,9 @@ app.use('/api/materials', materialRoutes);
 app.use('/api/manufacturing-materials', manufacturingMaterialsRoutes);
 app.use('/api/vendor',vendorRoutes);
 app.use("/api/purchase", purchaseRoutes);
+app.use("/api/departments", departmentRoutes);
+app.use("/api/employees", employeeRoutes);
+app.use("/api/positions", positionRoutes);
 
 
 // Sync DB & Start

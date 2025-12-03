@@ -23,6 +23,9 @@ const DeliveryOrder = require("./DeliveryOrder");
 const DeliveryItem = require("./DeliveryItem");
 const Invoice = require("./Invoice");
 const InvoiceItem = require("./InvoiceItem");
+const Department = require("./Department");
+const Position = require("./Position");
+const Employee = require("./Employee");
 
 // ======================================================================
 // RELASI MANUFACTURING
@@ -140,6 +143,20 @@ InvoiceItem.belongsTo(Invoice, { foreignKey: "invoiceId" });
 Product.hasMany(InvoiceItem, { foreignKey: "productId" });
 InvoiceItem.belongsTo(Product, { foreignKey: "productId" });
 
+// Relasi Department -> Employee
+Department.hasMany(Employee, { foreignKey: "departmentId" });
+Employee.belongsTo(Department, { foreignKey: "departmentId" });
+
+// Relasi Position -> Employee
+Position.hasMany(Employee, { foreignKey: "positionId" });
+Employee.belongsTo(Position, { foreignKey: "positionId" });
+
+// Department Manager assign
+Department.belongsTo(Employee, { as: "manager", foreignKey: "managerId" });
+
+// Parent Department optional
+Department.belongsTo(Department, { as: "parent", foreignKey: "parentId" });
+
 // ======================================================================
 // EXPORT MODEL
 // ======================================================================
@@ -153,5 +170,7 @@ module.exports = {
   Quotation, QuotationItem, QuotationTemplate,
   SalesOrder, SalesItem,
   DeliveryOrder, DeliveryItem,
-  Invoice, InvoiceItem,
+  Invoice, InvoiceItem, Employee,
+  Department,
+  Position
 };
