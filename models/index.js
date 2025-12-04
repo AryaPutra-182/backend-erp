@@ -60,7 +60,16 @@ ManufacturingOrderMaterial.belongsTo(Material, {
   foreignKey: "materialId",
   as: "material"
 });
+ManufacturingOrder.hasMany(ManufacturingOrderMaterial, {
+  foreignKey: "manufacturingOrderId",
+  as: "materials" // Alias ini PENTING karena dipanggil di Controller
+});
 
+// 2. Satu Material Order milik SATU Manufacturing Order
+ManufacturingOrderMaterial.belongsTo(ManufacturingOrder, {
+  foreignKey: "manufacturingOrderId",
+  as: "manufacturingOrder"
+});
 
 // ======================================================================
 // PROCUREMENT (RFQ -> PO)
@@ -87,6 +96,11 @@ PurchaseOrderItem.belongsTo(PurchaseOrder, { foreignKey: "purchaseOrderId" });
 Product.hasMany(PurchaseOrderItem, { foreignKey: "productId" });
 PurchaseOrderItem.belongsTo(Product, { foreignKey: "productId" });
 
+RFQItem.belongsTo(Material, { 
+    foreignKey: "materialId", 
+    as: "material" // Alias ini PENTING untuk controller
+});
+Material.hasMany(RFQItem, { foreignKey: "materialId" });
 
 // ======================================================================
 // SALES (Quotation -> Sales Order)

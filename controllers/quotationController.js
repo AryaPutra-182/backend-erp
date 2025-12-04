@@ -21,19 +21,21 @@ exports.getTemplates = async (req, res) => {
 exports.createQuotation = async (req, res) => {
   const t = await sequelize.transaction();
   try {
+    // 1. Ambil 'validUntil' dari req.body
     const { 
       customerId, templateId, deliveryAddress, invoiceAddress, 
-      paymentTerms, mainItems, optionalItems 
+      paymentTerms, mainItems, optionalItems, validUntil // <-- TAMBAHKAN INI
     } = req.body;
 
     if (!customerId)
       return res.status(400).json({ error: "Customer is required" });
 
+    // Validasi item (sama seperti sebelumnya)
     if ((!mainItems || mainItems.length === 0) &&
         (!optionalItems || optionalItems.length === 0))
       return res.status(400).json({ error: "Quotation must have at least 1 item" });
 
-    // Hitung ulang subtotal
+    // Hitung ulang subtotal (sama seperti sebelumnya)
     const items = [...(mainItems || []), ...(optionalItems || [])];
     const subtotalCalc = items.reduce(
       (sum, item) => sum + (Number(item.quantity) * Number(item.unitPrice)), 
@@ -44,21 +46,26 @@ exports.createQuotation = async (req, res) => {
     const taxAmount = subtotalCalc * taxRate;
     const grandTotal = subtotalCalc + taxAmount;
 
+    // Generate Nomor Quotation Sederhana
+    // Biar lebih rapi daripada Date.now(), kita gabung
+    const generatedQtNumber = `QT-${Date.now()}`;
+
     // Simpan header quotation
     const newQuotation = await Quotation.create({
-      quotationNumber: `QO/${Date.now()}`,
+      qtNumber: generatedQtNumber, // <-- UBAH KE 'qtNumber' (Sesuai nama kolom DB)
       customerId,
       templateId,
       deliveryAddress,
       invoiceAddress,
       paymentTerms,
+      validUntil,     // <-- MASUKKAN KE SINI AGAR TIDAK NULL
       subtotal: subtotalCalc,
       taxAmount,
-      grandTotal,   // <-- FIX
+      grandTotal,
       status: 'Draft'
     }, { transaction: t });
 
-    // Simpan items
+    // Simpan items (sama seperti sebelumnya)
     const formattedItems = items.map(item => ({
       quotationId: newQuotation.id,
       productId: item.productId,
@@ -129,21 +136,8 @@ exports.getQuotationById = async (req, res) => {
 
     if (!quotation) return res.status(404).json({ error: "Quotation not found" });
 
-    // Hitung ulang total
-    const subtotal = quotation.QuotationItems.reduce(
-      (sum, item) => sum + Number(item.subtotal),
-      0
-    );
-
-    const taxAmount = subtotal * 0.11;
-    const grandTotal = subtotal + taxAmount;
-
-    res.json({
-      ...quotation.toJSON(),
-      subtotal,
-      taxAmount,
-      grandTotal
-    });
+    // Langsung kirim data dari DB (karena grandTotal sudah tersimpan di sana)
+    res.json(quotation); 
 
   } catch (err) {
     res.status(500).json({ error: err.message });

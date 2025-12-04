@@ -20,6 +20,7 @@ const departmentRoutes = require("./routes/departmentRoutes");
 const employeeRoutes = require("./routes/employeeRoutes");
 const positionRoutes = require("./routes/positionRoutes");
 
+
 const app = express();
 
 // --- 2. MIDDLEWARE ---
@@ -44,7 +45,7 @@ app.use('/api/purchase', purchaseRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/positions', positionRoutes);
-
+app.use('/api/purchasing', purchaseRoutes);
 // 👇 PERHATIKAN INI (Pastikan path sesuai Frontend)
 app.use("/api/delivery-orders", deliveryRoutes); 
 app.use("/api/invoices", invoiceRoutes); 
@@ -54,11 +55,23 @@ app.use("/api/invoices", invoiceRoutes);
 const PORT = process.env.PORT || 5000;
 const QuotationTemplate = require("./models/QuotationTemplate");
 
-db.sequelize.sync().then(async () => {
-    console.log('✅ Database Synced');
-
-    // Auto Seed Template
+// WRAPPER ASYNC AGAR BISA PAKAI AWAIT
+const startServer = async () => {
     try {
+        // 1. MATIKAN FOREIGN KEY CHECK (Solusi Ampuh)
+        await db.sequelize.query('SET FOREIGN_KEY_CHECKS = 0');
+        console.log("⚠️ Foreign Key Checks Disabled");
+
+        // 2. RESET DATABASE (Hapus & Buat Ulang)
+        // force: true = Hapus semua data & tabel
+        await db.sequelize.sync();
+        console.log('✅ Database Synced & Reset');
+
+        // 3. NYALAKAN LAGI FOREIGN KEY CHECK
+        await db.sequelize.query('SET FOREIGN_KEY_CHECKS = 1');
+        console.log("🔒 Foreign Key Checks Enabled");
+
+        // 4. AUTO SEED TEMPLATE (Logic kamu tadi)
         const count = await QuotationTemplate.count();
         if (count === 0) {
             await QuotationTemplate.create({
@@ -69,9 +82,14 @@ db.sequelize.sync().then(async () => {
             });
             console.log("📌 Default quotation template created.");
         }
-    } catch (err) {
-        console.log("⚠️ Failed to auto-create template:", err.message);
-    }
 
-    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-});
+        // 5. JALANKAN SERVER
+        app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
+    } catch (error) {
+        console.error("❌ Gagal start server:", error);
+    }
+};
+
+// Panggil fungsinya
+startServer();

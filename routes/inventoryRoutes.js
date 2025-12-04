@@ -1,12 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const controller = require('../controllers/inventoryController');
-const upload = require('../middleware/upload');
+const controller = require('../controllers/inventoryController'); // Pastikan nama file controller benar
+const upload = require('../middleware/upload'); // Pastikan middleware multer benar
 
+// Route Product
 router.post('/products', upload.single('image'), controller.createProduct);
 router.get('/products', controller.getAllProducts);
 
-router.post('/materials', controller.createMaterial);
+// Route Material
+router.post('/materials', controller.createMaterial); // Material biasanya tidak pakai gambar, jadi tidak butuh upload.single
 router.get('/materials', controller.getAllMaterials);
 
 module.exports = router;

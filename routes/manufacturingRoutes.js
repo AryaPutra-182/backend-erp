@@ -1,19 +1,18 @@
 const express = require("express");
 const router = express.Router();
-const controller = require("../controllers/manufacturingController");
 
-router.post("/mo", controller.createMO);
+// 👇 UBAH INI: Sesuaikan dengan nama file controller yang ADA di folder Anda
+// Jika file Anda bernama 'manufacturingController.js', tulis seperti ini:
+const orderController = require("../controllers/manufacturingController"); 
 
-router.post("/allocate/:id", controller.allocateMaterial);
+// --- CEK APAKAH FUNGSI ADA (DEBUGGING) ---
+console.log("Cek Fungsi createManufacturingOrder:", orderController.createManufacturingOrder); 
+// Jika outputnya 'undefined', berarti nama fungsi di controller salah.
 
-router.get("/availability/:id", controller.checkAvailability);
-
-router.post("/start/:id", controller.startProduction);
-
-router.post("/consume/:id", controller.consumeMaterial);
-
-router.post("/complete/:id", controller.completeMO);
-router.get("/mo", controller.getAllMO);
-
+// Routes
+router.post("/mo", orderController.createManufacturingOrder);
+router.get("/mo", orderController.getManufacturingOrders);
+router.get('/mo/:id', orderController.getManufacturingOrderById);
+router.post("/allocate/:id", orderController.allocateStock);
 
 module.exports = router;
