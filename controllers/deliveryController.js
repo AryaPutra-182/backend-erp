@@ -8,11 +8,9 @@ const {
   sequelize
 } = require("../models");
 
-
-// Create Delivery Order from Sales Order
+// 1. Create Delivery Order from Sales Order
 const createFromSalesOrder = async (req, res) => {
   const { soId } = req.params;
-
   const t = await sequelize.transaction();
 
   try {
@@ -29,14 +27,12 @@ const createFromSalesOrder = async (req, res) => {
       status: "Pending"
     }, { transaction: t });
 
-    // copy item + harga
-   const items = so.items.map(item => ({
-  deliveryOrderId: delivery.id,
-  productId: item.productId,
-  quantityDemand: Number(item.quantity) || 0,
-  quantityDone: 0
-}));
-
+    const items = so.items.map(item => ({
+      deliveryOrderId: delivery.id,
+      productId: item.productId,
+      quantityDemand: Number(item.quantity) || 0,
+      quantityDone: 0
+    }));
 
     await DeliveryItem.bulkCreate(items, { transaction: t });
 
@@ -50,8 +46,7 @@ const createFromSalesOrder = async (req, res) => {
   }
 };
 
-
-
+// 2. Get All DO
 const getAllDeliveryOrders = async (req, res) => {
   try {
     const data = await DeliveryOrder.findAll({
@@ -64,35 +59,49 @@ const getAllDeliveryOrders = async (req, res) => {
   }
 };
 
-
+// 3. Get Detail DO (PERBAIKAN ERROR DI SINI)
 const getDeliveryOrderById = async (req, res) => {
   try {
-   const data = await DeliveryOrder.findByPk(req.params.id, {
-  include: [
-    Customer,
-    {
-      model: DeliveryItem,
-      as: "items",
-      include: [Product]
-    }
-  ]
-});
+    const data = await DeliveryOrder.findByPk(req.params.id, {
+      include: [
+        Customer,
+        // FIX: Hapus 'deliveryAddress' dari attributes SalesOrder karena kolom itu tidak ada di tabel SalesOrders
+        { 
+          model: SalesOrder, 
+          as: 'salesOrder', 
+          attributes: ['soNumber'] // Cukup ambil soNumber saja
+        },
+        {
+          model: DeliveryItem,
+          as: "items",
+          include: [Product]
+        }
+      ]
+    });
 
-// Map agar frontend tetap pakai quantity & deliveredQty
-data.items = data.items.map(i => ({
-  ...i.dataValues,
-  quantity: i.quantityDemand,
-  deliveredQty: i.quantityDone
-}));
+    if (!data) return res.status(404).json({ error: "Not Found" });
 
-res.json(data);
+    // Convert to JSON & Map fields for frontend compatibility
+    const result = data.toJSON();
+    
+    // Jika butuh deliveryAddress, biasanya diambil dari DeliveryOrder itu sendiri (result.deliveryAddress)
+    // atau dari Customer (result.Customer.companyAddress).
+
+    result.items = result.items.map(i => ({
+      ...i,
+      quantity: i.quantityDemand,
+      deliveredQty: i.quantityDone
+    }));
+
+    res.json(result);
 
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 };
 
-
+// 4. Update Status Manual
 const updateStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -110,6 +119,7 @@ const updateStatus = async (req, res) => {
   res.json({ msg: "Delivery Status Updated", doOrder });
 };
 
+// 5. Update Item Quantity (Input Manual Delivered Qty)
 const updateItemQty = async (req, res) => {
   try {
     const { itemId } = req.params;
@@ -136,30 +146,61 @@ const updateItemQty = async (req, res) => {
 };
 
 
-// ================= VALIDATE DELIVERY =================
+// ============================================================
+// 6. VALIDATE DELIVERY (POTONG STOK & UPDATE STATUS)
+// ============================================================
 const validateDelivery = async (req, res) => {
+  const t = await sequelize.transaction(); // Mulai Transaksi Database
   try {
     const delivery = await DeliveryOrder.findByPk(req.params.id, {
-      include: [{ model: DeliveryItem, as: "items" }]
+      include: [{ model: DeliveryItem, as: "items" }],
+      transaction: t
     });
 
-    if (!delivery) return res.status(404).json({ error: "Delivery not found" });
+    if (!delivery) throw new Error("Delivery not found");
+    if (delivery.status === "Delivered") throw new Error("Delivery ini sudah diproses sebelumnya.");
 
-    const notFullyDelivered = delivery.items.some(
-      item => item.quantityDone < item.quantityDemand
-    );
+    // A. Loop setiap item untuk potong stok
+    for (const item of delivery.items) {
+      const product = await Product.findByPk(item.productId, { transaction: t });
+      
+      if (!product) throw new Error(`Produk ID ${item.productId} tidak ditemukan.`);
 
-    if (notFullyDelivered) {
-      delivery.status = "Partial";
-    } else {
-      delivery.status = "Delivered";
+      // Prioritas: quantityDone (yang diinput user). Jika 0, anggap kirim semua (quantityDemand)
+      const qtyToDeduct = item.quantityDone > 0 ? item.quantityDone : item.quantityDemand;
+
+      // Cek Stok Gudang
+      const currentStock = Number(product.quantity || 0); 
+
+      if (currentStock < qtyToDeduct) {
+         throw new Error(`Stok "${product.name}" tidak cukup! Sisa: ${currentStock}, Mau kirim: ${qtyToDeduct}`);
+      }
+
+      // Eksekusi Potong Stok
+      await product.update({ 
+        quantity: currentStock - qtyToDeduct 
+      }, { transaction: t });
+
+      // Update item agar quantityDone terisi penuh jika user tidak input manual
+      if (item.quantityDone === 0) {
+         await item.update({ quantityDone: qtyToDeduct }, { transaction: t });
+      }
     }
 
-    await delivery.save();
+    // B. Tentukan Status Akhir
+    // Cek apakah ada item yang dikirim parsial
+    const isPartial = delivery.items.some(i => i.quantityDone < i.quantityDemand);
+    
+    delivery.status = isPartial ? "Partial" : "Delivered";
+    await delivery.save({ transaction: t });
 
-    res.json({ msg: "Delivery validated", status: delivery.status });
+    await t.commit(); // Simpan Perubahan Permanen
+    res.json({ msg: "Delivery Validated & Inventory Updated", status: delivery.status });
+
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    await t.rollback(); // Batalkan semua jika ada error
+    console.error("❌ VALIDATE ERROR:", err);
+    res.status(400).json({ error: err.message });
   }
 };
 
