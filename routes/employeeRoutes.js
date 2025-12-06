@@ -20,6 +20,8 @@ const upload = multer({ storage });
 
 // Routes
 router.get("/", controller.getAll);
+router.get('/:id', controller.getById); // Route Detail
+router.delete('/:id', controller.delete);
 
 // POST must use multer to receive image
 router.post("/", upload.single("photo"), controller.create);

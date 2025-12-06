@@ -7,5 +7,6 @@ const upload = require('../middleware/upload');
 router.post('/', upload.single('imageProfile'), controller.createCustomer);
 router.get('/:id', controller.getCustomerDetail);
 router.get('/', controller.getAllCustomers);
+router.delete('/:id', controller.deleteCustomer);  
 
 module.exports = router;

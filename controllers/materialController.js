@@ -75,12 +75,18 @@ exports.updateMaterial = async (req, res) => {
 
 exports.deleteMaterial = async (req, res) => {
   try {
-    const material = await Material.findByPk(req.params.id);
-    if (!material) return res.status(404).json({ message: 'Material not found' });
+    const { id } = req.params;
+    
+    const material = await Material.findByPk(id);
+    if (!material) return res.status(404).json({ msg: "Material not found" });
 
     await material.destroy();
-    res.json({ message: 'Material deleted' });
+
+    res.json({ msg: "Material deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ error: error.message });
   }
 };
+
+

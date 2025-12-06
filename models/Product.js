@@ -14,6 +14,10 @@ const Product = sequelize.define('Product', {
     quantity: {
         type: DataTypes.INTEGER, // Atau FLOAT/DECIMAL jika stok berupa pecahan
         defaultValue: 0
+    },
+     status: {
+      type: DataTypes.STRING,
+      defaultValue: 'active',
     }
 });
 

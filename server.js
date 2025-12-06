@@ -46,7 +46,6 @@ app.use('/api/departments', departmentRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/positions', positionRoutes);
 app.use('/api/purchasing', purchaseRoutes);
-// 👇 PERHATIKAN INI (Pastikan path sesuai Frontend)
 app.use("/api/delivery-orders", deliveryRoutes); 
 app.use("/api/invoices", invoiceRoutes); 
 
