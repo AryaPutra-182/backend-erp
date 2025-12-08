@@ -2,31 +2,42 @@ const sequelize = require("../config/database");
 const { DataTypes } = require("sequelize");
 
 // --- Import Models ---
-const User = require("./User");
-const Vendor = require("./Vendor");
-const Customer = require("./Customer");
-const Product = require("./Product");
-const Material = require("./Material");
-const BOM = require("./BOM");
-const ManufacturingOrder = require("./ManufacturingOrder");
-const ManufacturingOrderMaterial = require("./ManufacturingOrderMaterial");
-const RFQ = require("./RFQ");
-const RFQItem = require("./RFQItem");
-const PurchaseOrder = require("./PurchaseOrder");
-const PurchaseOrderItem = require("./PurchaseOrderItem");
-const Quotation = require("./Quotation");
-const QuotationItem = require("./QuotationItem");
-const QuotationTemplate = require("./QuotationTemplate");
-const SalesOrder = require("./SalesOrder");
-const SalesItem = require("./SalesItem");
-const DeliveryOrder = require("./DeliveryOrder");
-const DeliveryItem = require("./DeliveryItem");
+const loadModel = (path) => {
+    const model = require(path);
+    // Jika export-nya fungsi biasa (Factory Pattern), kita jalankan
+    if (typeof model === "function" && !model.tableName && !model.init) {
+         return model(sequelize, DataTypes);
+    }
+    // Jika export-nya sudah jadi Model (Class/Object), langsung pakai
+    return model;
+};
 
-const Department = require("./Department");
-const Position = require("./Position");
-const Employee = require("./Employee");
-const Invoice = require("./Invoice");
-const InvoiceItem = require("./InvoiceItem");
+// --- Import Models ---
+const User = loadModel("./User");
+const Vendor = loadModel("./Vendor");
+const Customer = loadModel("./Customer");
+const Product = loadModel("./Product");
+const Material = loadModel("./Material");
+const BOM = loadModel("./BOM");
+const ManufacturingOrder = loadModel("./ManufacturingOrder");
+const ManufacturingOrderMaterial = loadModel("./ManufacturingOrderMaterial");
+const RFQ = loadModel("./RFQ");
+const RFQItem = loadModel("./RFQItem");
+const PurchaseOrder = loadModel("./PurchaseOrder");
+const PurchaseOrderItem = loadModel("./PurchaseOrderItem");
+const Quotation = loadModel("./Quotation");
+const QuotationItem = loadModel("./QuotationItem");
+const QuotationTemplate = loadModel("./QuotationTemplate");
+const SalesOrder = loadModel("./SalesOrder");
+const SalesItem = loadModel("./SalesItem");
+const DeliveryOrder = loadModel("./DeliveryOrder");
+const DeliveryItem = loadModel("./DeliveryItem");
+
+const Department = loadModel("./Department");
+const Position = loadModel("./Position");
+const Employee = loadModel("./Employee");
+const Invoice = loadModel("./Invoice");
+const InvoiceItem = loadModel("./InvoiceItem");
 // ======================================================================
 // MANUFACTURING
 // ======================================================================

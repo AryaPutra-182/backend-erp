@@ -19,6 +19,7 @@ const purchaseRoutes = require("./routes/purchaseRoutes");
 const departmentRoutes = require("./routes/departmentRoutes");
 const employeeRoutes = require("./routes/employeeRoutes");
 const positionRoutes = require("./routes/positionRoutes");
+const authRoutes = require('./routes/authRoutes');
 
 
 const app = express();
@@ -48,6 +49,7 @@ app.use('/api/positions', positionRoutes);
 app.use('/api/purchasing', purchaseRoutes);
 app.use("/api/delivery-orders", deliveryRoutes); 
 app.use("/api/invoices", invoiceRoutes); 
+app.use('/api/auth', authRoutes);
 
 
 // --- 4. START SERVER ---
